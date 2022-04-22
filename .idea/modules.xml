@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/MaLe-CoCo.iml" filepath="$PROJECT_DIR$/.idea/MaLe-CoCo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../算法效果对比/.idea/算法效果对比.iml" filepath="$PROJECT_DIR$/../算法效果对比/.idea/算法效果对比.iml" />
     </modules>
   </component>
 </project>
