@@ -1,8 +1,5 @@
 import numpy as np
-import scipy.sparse
-import random
-import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error 
+from numba import jit
 ## in this file, we define some commonly used utils function including soft-threshold, single-value threshold, and solution process for Sylvester function and Hadamard linear system.
 
 def soft_threshold(x,labda):
@@ -37,6 +34,7 @@ def single_value_threshold(x,tau):
     z = u.dot(S).dot(v)
     return z
 
+@jit
 def Hadamard_Solver(A,B,C):
     """
     A solver for Hadamard linear system, whose equation could be written as  A \circ X + B X = C,
@@ -54,11 +52,12 @@ def Hadamard_Solver(A,B,C):
 
     return X
 
+@jit
 def solve_sylvester(A,S,W,C):
     X_ = np.zeros_like(C)
-    C_ = C.dot(W)
+    C_ = C.dot(np.ascontiguousarray(W))
     for i in range(C.shape[1]):
-        X_[:,i] = np.linalg.inv(A+S[i]*np.identity(A.shape[0])).dot(C_[:,i])
+        X_[:,i] = np.linalg.inv(A+S[i]*np.identity(A.shape[0])).dot(np.ascontiguousarray(C_[:,i]))
     X = X_.dot(np.linalg.pinv(W))
     return X
 
@@ -114,3 +113,22 @@ def cal_rbf_dist(data, t = 1):
 
     W = rbf_dist - np.eye(rbf_dist.shape[0])
     return W
+
+def calculate_relation(x,y):
+    return np.sum((x-y)**2)
+
+def calculate_adjacency(M):
+    adjacency = np.zeros((M.shape[1],M.shape[1]))
+    for i,line1 in enumerate(M.T):
+        for j,line2 in enumerate(M.T):
+            adjacency[i][j] = calculate_relation(line1, line2)
+    adjacency_normalized = np.exp(-adjacency)
+    adjacency_normalized -= np.identity(adjacency_normalized.shape[0])
+    row_index = np.arange(adjacency_normalized.shape[0]).repeat(adjacency_normalized.shape[0]).reshape(-1,adjacency_normalized.shape[0])
+    column_index = row_index.T
+    normal_factor = np.exp(-np.abs(row_index-column_index)**2/np.sqrt(adjacency_normalized.shape[0]))
+    adjacency_normalized = adjacency_normalized*normal_factor
+    return adjacency_normalized
+
+def smape(y_true, y_pred):
+    return 2.0 * np.mean(np.abs(y_pred - y_true) / (np.abs(y_pred) + np.abs(y_true))) * 100
